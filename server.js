@@ -24,6 +24,7 @@ function buildTurboUrl(filters = {}) {
   };
 
   // Basic filters
+  if (filters.page) params.append("page", filters.page);
   if (filters.make) appendArray("make", [filters.make]);
   if (filters.models) appendArray("model", filters.models);
 
@@ -34,9 +35,11 @@ function buildTurboUrl(filters = {}) {
   if (filters.priceTo) params.append("q[price_to]", filters.priceTo);
 
   // Defaults (important!)
-  params.append("q[currency]", "azn");
-  params.append("q[loan]", "0");
-  params.append("q[barter]", "0");
+  // params.append("q[currency]", "azn");
+  // params.append("q[loan]", "0");
+  // params.append("q[barter]", "0");
+
+  console.log("Built URL:", `${baseUrl}?${params.toString()}`);
 
   return `${baseUrl}?${params.toString()}`;
 }
@@ -45,6 +48,11 @@ function buildTurboUrl(filters = {}) {
 function parseListings(html) {
   const $ = cheerio.load(html);
   const cars = [];
+
+  const productsAmountText = $(".products-title-amount").first().text().trim();
+  const productsAmount = parseInt(productsAmountText.replace(/[^\d]/g, ""), 10);
+  const perPage = 24;
+  const totalPages = Math.ceil(productsAmount / perPage);
 
   $(".products-i:not(.products-i--promotion-card)").each((i, el) => {
     const item = $(el);
@@ -100,7 +108,7 @@ function parseListings(html) {
     });
   });
 
-  return cars;
+  return {cars, productsAmount, totalPages};
 }
 
 // API endpoint
@@ -112,7 +120,8 @@ app.get("/api/turbo", async (req, res) => {
       yearFrom,
       yearTo,
       priceFrom,
-      priceTo
+      priceTo,
+      page
     } = req.query;
 
     const filters = {
@@ -121,7 +130,8 @@ app.get("/api/turbo", async (req, res) => {
       yearFrom,
       yearTo,
       priceFrom,
-      priceTo
+      priceTo,
+      page
     };
 
     const url = buildTurboUrl(filters);
@@ -138,8 +148,9 @@ app.get("/api/turbo", async (req, res) => {
     res.json({
       success: true,
       url,
-      count: data.length,
-      data
+      count: data.productsAmount,
+      totalPages: data.totalPages,
+      data: data.cars
     });
 
   } catch (err) {
@@ -163,6 +174,14 @@ app.get('/brands', (req, res) => {
 app.get('/models', (req, res) => {
   const { brandId } = req.query;
   const filtered = models.filter(m => m.brandId === brandId);
+  res.json(filtered);
+});
+
+app.get('/models/:id', (req, res) => {
+  const id = req.params.id;
+
+  const filtered = models.filter(m => m.value === id);
+
   res.json(filtered);
 });
 
@@ -675,7 +694,7 @@ const models = [
   { brandId: '218', value: '2279', name: 'A115' },
   { brandId: '374', value: '3989', name: 'A200' },
   { brandId: '9', value: '13', name: 'A3' },
-  { brandId: '9', value: 'group346', name: 'A4' },
+  // { brandId: '9', value: 'group346', name: 'A4' },
   { brandId: '9', value: '14', name: 'A4' },
   { brandId: '9', value: 'group166', name: 'A5' },
   { brandId: '9', value: '987', name: 'A5' },
