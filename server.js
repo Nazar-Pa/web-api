@@ -1,7 +1,7 @@
-const express = require("express");
-const axios = require("axios");
-const cheerio = require("cheerio");
-const cors = require("cors");
+import express from "express";
+import axios from "axios";
+import * as cheerio from 'cheerio';
+import cors from "cors";
 
 const app = express();
 app.use(cors({
@@ -108,7 +108,7 @@ function parseListings(html) {
     });
   });
 
-  return {cars, productsAmount, totalPages};
+  return { cars, count: productsAmount, totalPages };
 }
 
 // API endpoint
@@ -146,11 +146,8 @@ app.get("/api/turbo", async (req, res) => {
     const data = parseListings(response.data);
 
     res.json({
-      success: true,
-      url,
-      count: data.productsAmount,
-      totalPages: data.totalPages,
-      data: data.cars
+      source: "live",
+      data
     });
 
   } catch (err) {
