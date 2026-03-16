@@ -140,11 +140,16 @@ app.get("/api/turbo", async (req, res) => {
       headers: {
         "User-Agent": "Mozilla/5.0",
         "Accept-Language": "az,en;q=0.9"
-      }
+      },
+      timeout: 20000
     });
 
-    console.log('status', response.status);
-    console.log('slice', response.data.slice(0, 500));
+    if (!response.data.includes("products-i")) {
+      throw new Error("Turbo blocked or layout changed");
+    }
+
+    console.log("STATUS:", response.status);
+    console.log("HTML SAMPLE:", response.data.slice(0, 300));
 
     const data = parseListings(response.data);
 
@@ -154,7 +159,8 @@ app.get("/api/turbo", async (req, res) => {
     });
 
   } catch (err) {
-    console.error(err.message);
+    console.error("SCRAPE ERROR:", err.message);
+    console.error(err.stack);
 
     res.status(500).json({
       success: false,
