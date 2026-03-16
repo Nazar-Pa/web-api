@@ -143,8 +143,8 @@ app.get("/api/turbo", async (req, res) => {
       }
     });
 
-    console.log(response.status);
-    console.log(response.data.slice(0, 500));
+    console.log('status', response.status);
+    console.log('slice', response.data.slice(0, 500));
 
     const data = parseListings(response.data);
 
